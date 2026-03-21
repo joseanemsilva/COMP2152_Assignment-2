@@ -46,8 +46,8 @@ class NetworkTool:
     def target(self, target):
         if not target:
             print("Error: Target cannot be empty")
-            raise Exception("Empty Target")
-        self.__target = target
+        else:
+            self.__target = target
 
     def __del__(self):
         print("NetworkTool instance destroyed")
@@ -185,7 +185,6 @@ if __name__ == "__main__":
         total +=1
     print("------ \nTotal open ports found:", str(total))
     save_results(target, scanner.scan_results)
-    # save_results(target, scanner.get_open_ports())
 
     load_history = input("Would you like to see past scan history? (yes/no):")
     if load_history == "yes":
