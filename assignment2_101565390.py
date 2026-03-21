@@ -30,7 +30,7 @@ common_ports = {
     443: "HTTPS",
     3306: "MySQL",
     3389: "RDP",
-    8080: "HTTP-Alt"
+    8080: "HTTP-Alt",
 }
 
 # NetworkTool parent class
@@ -73,7 +73,7 @@ class PortScanner(NetworkTool):
 
     def __del__(self):
         print("PortScanner instance destroyed")
-        super.__del__()
+        super().__del__()
 
 # Q4: What would happen without try-except here?
     """
@@ -108,7 +108,7 @@ class PortScanner(NetworkTool):
     def scan_range(self, start_port, end_port):
         threads = []
         for port in range(start_port, end_port+1):
-            t = threading.Thread(self.scan_port, arg=(port,))
+            t = threading.Thread(target=self.scan_port, args=(port,))
             threads.append(t)
         for t in threads:
             t.start()
@@ -141,58 +141,55 @@ def save_results(target, results):
 def load_past_scans():
     connection = sqlite3.connect("scan_history.db")
     cursor = connection.cursor()
-    cursor.execute(
-        "SELECT target, port, status, service, scan_date FROM scan_history"
-    )
-    scans = cursor.fetchall()
-    for row in scans:
-        print(f"[{row[4]}] {row[0]} : Port {row[1]} ({row[3]}) - {row[2]}")
-
-    if len(scans) == 0:
+    try:
+        cursor.execute(
+            "SELECT target, port, status, service, scan_date FROM scan_history"
+        )
+        scans = cursor.fetchall()
+        for row in scans:
+            print(f"[{row[4][:19]}] {row[0]} : Port {row[1]} ({row[3]}) - {row[2]}")
+    except sqlite3.OperationalError:
         print("No past scan found.")
     connection.close()
-    
+
 # ============================================================
 # MAIN PROGRAM
 # ============================================================
 if __name__ == "__main__":
-    pass
-    # TODO: Get user input with try-except (Step ix)
-    # - Target IP (default "127.0.0.1" if empty)
-    # - Start port (1-1024)
-    # - End port (1-1024, >= start port)
-    # - Catch ValueError: "Invalid input. Please enter a valid integer."
-    # - Range check: "Port must be between 1 and 1024."
-    try:
-        target = input("Enter an IP address: ")
-        start_port = int(input("Enter a start port number between 1 to 1024: "))
-        end_port = int(input("Enter an ending port number between 1 to 1024, greater than start port: "))
-    except ValueError:
-        print("Invalid input. Please enter a valid integer.")
+    # Get user input with try-except
+    while True:
+        try:
+            default_ip = "127.0.0.1"
+            target = input(f"Enter an IP address [{default_ip}]: ") or default_ip
+            start_port = int(input("Enter a start port number between 1 to 1024: "))
+            if start_port < 1 or start_port > 1024:
+                print("Port must be between 1 and 1014.")
+                continue
+            end_port = int(input(f"Enter an ending port number between {start_port} to 1024: "))
+            if end_port < start_port or end_port > 1024:
+                print(f"Port must be between {start_port} and 1014.")
+                continue
+            break
+        except ValueError:
+            print("Invalid input. Please enter a valid integer.")
 
-
-    # TODO: After valid input (Step x)
-    # - Create PortScanner object
-    # - Print "Scanning {target} from port {start} to {end}..."
-    # - Call scan_range()
-    # - Call get_open_ports() and print results
-    # - Print total open ports found
-    # - Call save_results()
-    # - Ask "Would you like to see past scan history? (yes/no): "
-    # - If "yes", call load_past_scans()
-
-    obg = PortScanner(target)
+    # Instantiate PortScanner object to print the target, considering the user input.
+    scanner = PortScanner(target)
     print(f"Scanning {target} from {start_port} to {end_port}...")
 
-    obg.scan_range(start_port, end_port)
+    scanner.scan_range(start_port, end_port)
     total = 0
-    for port in obg.get_open_ports():
-        print(f"Port {port}: Open ({port})")
-        total +1
-    print("--------\nTotal open ports found:", str(total))
+    print(f"---  Scan results for {target}  ---")
+    for result in scanner.get_open_ports():
+        print(f"Port {result[0]}: Open ({result[2]})")
+        total +=1
+    print("------ \nTotal open ports found:", str(total))
+    save_results(target, scanner.scan_results)
+    # save_results(target, scanner.get_open_ports())
 
-    save_results(target)
-
+    load_history = input("Would you like to see past scan history? (yes/no):")
+    if load_history == "yes":
+        load_past_scans()
 
 # Q5: New Feature Proposal
 # TODO: Your 2-3 sentence description here... (Part 2, Q5)
