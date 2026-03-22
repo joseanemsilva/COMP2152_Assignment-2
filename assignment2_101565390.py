@@ -38,6 +38,10 @@ class NetworkTool:
     def __init__(self, target):
         self.__target = target
     
+    # Q3: What is the benefit of using @property and @target.setter?
+    """
+    The use of @property and @target.setters permits access to hidden, or private attributes, making them possible to be accessed or managed. It allows for adding more complex code into the getter/setter, such as validation or queries.
+    """
     @property
     def target(self):
         return self.__target
@@ -52,10 +56,6 @@ class NetworkTool:
     def __del__(self):
         print("NetworkTool instance destroyed")
 
-# Q3: What is the benefit of using @property and @target.setter?
-    """
-    The use of @property and @target.setters permits access to hidden, or private attributes, making them possible to be accessed or managed. It allows for adding more complex code into the getter/setter, such as validation or queries.
-    """
 
 # Q1: How does PortScanner reuse code from NetworkTool?
     """
@@ -91,7 +91,7 @@ class PortScanner(NetworkTool):
                 self.scan_results.append((port, status, service_name))
 
         except socket.error as e:
-            print(f"Error scanning port {port}: {e.message}")
+            print(f"Error scanning port {port}: {e.strerror}")
         finally:
             sock.close()
 
@@ -191,5 +191,12 @@ if __name__ == "__main__":
         load_past_scans()
 
 # Q5: New Feature Proposal
-# TODO: Your 2-3 sentence description here... (Part 2, Q5)
 # Diagram: See diagram_studentID.png in the repository root
+"""
+New Feature: Filter past scan to load by specified target and date.
+In the load_scan() function, the user will be asked if they want to filter past scan history to load.
+If the user chooses to filter, the targets available will be displayed for the user to choose a specific target, if a target is valid, all dates available for the target will be displayed so the user can choose a specific date.
+If the uses chooses to load all past history, all information available will be displayed.
+Enhancement: For better user experience
+Upon running the program, on the main function, the user will choose between performing a new scan or loading past history. The default would be to perform a new scan, and, if an invalid option is passed, the program will exit.
+"""
